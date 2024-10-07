@@ -8,3 +8,13 @@ MOV P1, #00; inicializa o led
 CALL INICIAR; chamar a rotina para iniciar
 
 ;---LOOP principal para checar senha
+MOV R0, #04 ; senha de 4 digitos
+MOV DPTR, #SENHA_CORRETA ; aponta para endereço da senha corretz
+
+
+INICIAR:
+    ; Rotina de inicialização
+    MOV P1, #00H    ; Apaga o LED
+    RET
+
+

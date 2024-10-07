@@ -18,3 +18,5 @@ INICIAR:
     RET
 
 
+SENHA_CORRETA:
+    DB 01H, 02H, 03H, 04H  ; Define a senha como 1234

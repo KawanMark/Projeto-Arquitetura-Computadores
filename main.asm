@@ -9,21 +9,21 @@ MAIN:
 
 	;---LOOP principal para checar senha
 	MOV R0, #04 ; senha de 4 digitos
-	MOV DPTR, #SENHA_CORRETA ; aponta para endereço da senha corretz
+	MOV DPTR, #senhaIncorreta ; aponta para endereço da senha corretz
 
 
 iniciar:
     ; Rotina de inicialização
     MOV P1, #00H    ; Apaga o LED
-    fim
+    acall fim
 
 alarmeAtivado:
-	SET P1.0 ;acende o led no p1.0 para alarme ativo para senha correta
-	fim
+	SETB P1.0 ;acende o led no p1.0 para alarme ativo para senha correta
+	acall fim
 
 senhaIncorreta:
 	CLR P1.0 ; apaga o led no p1.9 para indicar senha incorreta
-	fim
+	 acall fim
 
 senhasCorreta:
     DB 01H, 02H, 03H, 04H  ; Define a senha como 1234
@@ -44,7 +44,7 @@ mapearTeclas: ; Subrotina para mapear
 
 pegarChave:
 	SETB F0
-	fim
+	 acall fim
 
 lerColuna:
 	JNB P0.4, pegarChave
@@ -53,7 +53,7 @@ lerColuna:
 	INC R0
 	JNB P0.6, pegarChave
 	INC R0
-	fim
+	acall fim
 	
 lerTeclado:
 	MOV R0, #00

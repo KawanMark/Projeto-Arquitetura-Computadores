@@ -21,9 +21,13 @@ LER_SENHA:
 ;nao sei fazer eu acho
 
 ALARME_ATIVADO:
-SET P1.0 ;acende o led no p1.0 para alarme ativo
+SET P1.0 ;acende o led no p1.0 para alarme ativo para senha correta
 RET
 
+
+SENHA_INCORRETA:
+CLR P1.0 ; apaga o led no p1.9 para indicar senha incorreta
+RET
 
 SENHA_CORRETA:
     DB 01H, 02H, 03H, 04H  ; Define a senha como 1234

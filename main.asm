@@ -12,27 +12,23 @@ MAIN:
 	MOV DPTR, #SENHA_CORRETA ; aponta para endereço da senha corretz
 
 
-INICIAR:
+iniciar:
     ; Rotina de inicialização
     MOV P1, #00H    ; Apaga o LED
-    RET
+    fim
 
-LER_SENHA:
-;nao sei fazer eu acho
-
-ALARME_ATIVADO:
+alarmeAtivado:
 	SET P1.0 ;acende o led no p1.0 para alarme ativo para senha correta
-	RET
+	fim
 
-
-SENHA_INCORRETA:
+senhaIncorreta:
 	CLR P1.0 ; apaga o led no p1.9 para indicar senha incorreta
-	RET
+	fim
 
-SENHA_CORRETA:
+senhasCorreta:
     DB 01H, 02H, 03H, 04H  ; Define a senha como 1234
 
-MAPEAR_TECLAS: ; Subrotina para mapear
+mapearTeclas: ; Subrotina para mapear
 	MOV 40H, #'#' ; e facilitar a identificacao 
 	MOV 41H, #'0' ; de qual tecla foi pressionada
 	MOV 42H, #'*'
@@ -45,3 +41,44 @@ MAPEAR_TECLAS: ; Subrotina para mapear
 	MOV 49H, #'3'
 	MOV 4AH, #'2'
 	MOV 4AH, #'1'
+
+pegarChave:
+	SETB F0
+	fim
+
+lerColuna:
+	JNB P0.4, pegarChave
+	INC R0
+	JNB  P0.5, pegarChave
+	INC R0
+	JNB P0.6, pegarChave
+	INC R0
+	fim
+	
+lerTeclado:
+	MOV R0, #00
+
+	MOV P0, #0FFH
+	CLR P0.0
+	CALL lerColuna
+	JB F0, fim
+
+	SETB P0.0
+	CLR P0.1
+	CALL lerColuna
+	JB F0, fim
+
+	SETB P0.1
+	CLR P0.2
+	CALL lerColuna
+	JB F0, fim
+
+	SETB P0.2
+	CLR P0.3
+	CALL lerColuna
+	JB F0, fim
+
+alarmeAtivido:
+	
+fim:
+	ret

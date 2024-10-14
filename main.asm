@@ -12,6 +12,10 @@ MAIN:
 
 iniciar:
     ACALL mapearTeclas
+    ACALL registrarSenha ; Chama a rotina para registrar a senha
+    ; Aqui você pode verificar a senha digitada
+    ; Para fins de exemplo, vamos simular uma senha incorreta
+    ACALL piscarLeds ; Chama a rotina para piscar LEDs em caso de senha incorreta
     LJMP fim
 
 ; Subrotina para mapear e facilitar a identificação de qual tecla foi pressionada
@@ -28,6 +32,7 @@ mapearTeclas:
     MOV 49H, #'3'
     MOV 4AH, #'2'
     MOV 4BH, #'1'  ; Mapeamento da tecla '1'
+    RET
 
 ; Registro da senha no endereço de memória
 registrarSenha:
@@ -41,13 +46,24 @@ receberSenha:
     MOV @R1, A  ; Armazena o valor lido no endereço apontado por R1
     INC R1      ; Incrementa o endereço para o próximo dígito
     DJNZ b, receberSenha
-    LJMP fim
+    RET
+
+; Rotina para piscar os LEDs em caso de senha incorreta
+piscarLeds:
+    MOV R2, #5          ; Número de vezes que os LEDs irão piscar
+piscar_loop:
+    SETB P1.0           ; Acender LED no P1.0
+    ACALL delay
+    CLR P1.0            ; Apagar LED no P1.0
+    ACALL delay
+    DJNZ R2, piscar_loop ; Repete até R2 chegar a zero
+    RET
 
 ; Sub-rotina de leitura da tecla pressionada
 pegarChave:
     SETB F0
     MOV A, R0
-	ACALL delay ; Debounce: adicione um pequeno atraso para evitar leituras múltiplas
+    ACALL delay ; Debounce: adicione um pequeno atraso para evitar leituras múltiplas
     LJMP fim
 
 ; Rotina para leitura de colunas do teclado
@@ -90,11 +106,12 @@ lerTeclado:
 delay:
     MOV R7, #50  ; Valor ajustável para o tempo de debounce
     ACALL timer
-    LJMP fim
+    RET
 
 ; Temporizador de contagem decrescente
 timer:
     DJNZ R7, timer
+    RET
 
 fim:
     RET

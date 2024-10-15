@@ -1,13 +1,13 @@
 ORG 0000H
 SJMP MAIN 
 
-ORG 0030H
-
-senha equ 20h
-
+senha EQU 20h
+input EQU 30h
 MAIN: 
     MOV P1, #00 ; Inicializa o LED
     ACALL iniciar ; Chama a rotina para iniciar
+	ACALL registrarInput
+	MOV A, input
     SJMP $
 
 iniciar:
@@ -32,12 +32,20 @@ mapearTeclas:
     MOV 49H, #'3'
     MOV 4AH, #'2'
     MOV 4BH, #'1'  ; Mapeamento da tecla '1'
-    RET
+    
+	LJMP fim
 
 ; Registro da senha no endereço de memória
 registrarSenha:
-    MOV b, #04h  ; Contador de quantos dígitos recebeu
+    MOV B, #04h  ; Contador de quantos dígitos recebeu
     MOV R1, #senha ; Endereço onde vai registrar a senha
+	ACALL receberSenha
+
+	LJMP fim
+
+registrarInput:
+	MOV B, #04h
+	MOV R1, #input
 
 receberSenha:
     ACALL lerTeclado
@@ -45,19 +53,21 @@ receberSenha:
     CLR F0
     MOV @R1, A  ; Armazena o valor lido no endereço apontado por R1
     INC R1      ; Incrementa o endereço para o próximo dígito
-    DJNZ b, receberSenha
-    RET
+    DJNZ B, receberSenha
+
+    LJMP fim
 
 ; Rotina para piscar os LEDs em caso de senha incorreta
 piscarLeds:
     MOV R2, #5          ; Número de vezes que os LEDs irão piscar
 piscar_loop:
-    SETB P1.0           ; Acender LED no P1.0
+    SETB P1.0           
     ACALL delay
-    CLR P1.0            ; Apagar LED no P1.0
+    CLR P1.0           
     ACALL delay
-    DJNZ R2, piscar_loop ; Repete até R2 chegar a zero
-    RET
+    DJNZ R2, piscar_loop 
+    
+	LJMP fim
 
 ; Sub-rotina de leitura da tecla pressionada
 pegarChave:
@@ -102,9 +112,26 @@ lerTeclado:
 
     LJMP fim
 
+verificarInput:
+	MOV R0, #20h
+	MOV R1, #30h
+	MOV R2, #04h
+
+percorrerInput:
+	MOV A, @R0
+	MOV B, @R1
+	CJNE A, B, fim ; Verificar se o valor presente nos enderecos sao equivalentes
+	
+	INC R0
+	INC R1
+	
+	DJNZ R2, percorrerInput
+	
+	LJMP fim
+	
 ; Rotina de delay para debounce
 delay:
-    MOV R7, #50  ; Valor ajustável para o tempo de debounce
+    MOV R7, #150  ; Valor ajustável para o tempo de debounce
     ACALL timer
     RET
 

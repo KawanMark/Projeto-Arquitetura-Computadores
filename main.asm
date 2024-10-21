@@ -7,7 +7,7 @@ input EQU 30h   ; Endereço para armazenar a tentativa de entrada
 MAIN:
     MOV P1, #00      ; Inicializa o LED apagado
     ACALL iniciar    ; Chama a rotina de iniciar (registra a primeira senha)
-    ACALL registrarInput  ; Captura a entrada do usuário para verificação
+    ACALL registrarInput  ; Captura a segunda entrada do usuário para verificação
     ACALL verificarInput  ; Verifica se a senha está correta
     SJMP $           ; Loop infinito para parar o programa
 
@@ -47,7 +47,6 @@ registrarInput:
 receberSenha:
     ; Rotina para capturar 4 dígitos de senha ou entrada
     MOV B, #04h          ; Reinicia o contador de dígitos
-    MOV R1, #senha       ; Ponteiro para a senha
 receber_loop:
     ACALL lerTeclado     ; Chama a rotina para ler o teclado
     JNB F0, receber_loop ; Se não houver tecla pressionada, continua

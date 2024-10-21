@@ -111,13 +111,13 @@ verificarInput:
     MOV R1, #input   ; Ponteiro para a entrada do usuário
     MOV R2, #04h     ; Número de dígitos para comparar
 
-percorrerInput:
+senha_igual:
     MOV A, @R0       ; Carrega um dígito da senha
     MOV B, @R1       ; Carrega o dígito correspondente da entrada
     CJNE A, B, erro  ; Se forem diferentes, vai para a rotina de erro
     INC R0           ; Avança para o próximo dígito da senha
     INC R1           ; Avança para o próximo dígito da entrada
-    DJNZ R2, percorrerInput  ; Continua verificando os próximos dígitos
+    DJNZ R2, senha_igual  ; Continua verificando os próximos dígitos
     RET              ; Se todas as comparações forem iguais, a senha está correta
 
 erro:

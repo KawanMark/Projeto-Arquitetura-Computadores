@@ -1,28 +1,26 @@
 ORG 0000H
-SJMP MAIN 
+SJMP MAIN
 
-senha EQU 20h
-input EQU 30h
-MAIN: 
-    MOV P1, #00 ; Inicializa o LED
-    ACALL iniciar ; Chama a rotina para iniciar
-	ACALL registrarInput
-	MOV A, input
-    SJMP $
+senha EQU 20h   ; Endereço para armazenar a senha
+input EQU 30h   ; Endereço para armazenar a tentativa de entrada
+
+MAIN:
+    MOV P1, #00      ; Inicializa o LED apagado
+    ACALL iniciar    ; Chama a rotina de iniciar (registra a primeira senha)
+    ACALL registrarInput  ; Captura a segunda entrada do usuário para verificação
+    ACALL verificarInput  ; Verifica se a senha está correta
+    SJMP $           ; Loop infinito para parar o programa
 
 iniciar:
     ACALL mapearTeclas
-    ACALL registrarSenha ; Chama a rotina para registrar a senha
-    ; Aqui você pode verificar a senha digitada
-    ; Para fins de exemplo, vamos simular uma senha incorreta
-    ACALL piscarLeds ; Chama a rotina para piscar LEDs em caso de senha incorreta
-    LJMP fim
+    ACALL registrarSenha  ; Registra a senha inicial
+    RET
 
-; Subrotina para mapear e facilitar a identificação de qual tecla foi pressionada
-mapearTeclas: 
-    MOV 40H, #'#'  ; Botão para confirmar senha digitada 
-    MOV 41H, #'0'  
-    MOV 42H, #'*'  ; Botão para apagar a senha digitada
+mapearTeclas:
+    ; Mapeia as teclas para o teclado
+    MOV 40H, #'#'
+    MOV 41H, #'0'
+    MOV 42H, #'*'
     MOV 43H, #'9'
     MOV 44H, #'8'
     MOV 45H, #'7'
@@ -31,52 +29,67 @@ mapearTeclas:
     MOV 48H, #'4'
     MOV 49H, #'3'
     MOV 4AH, #'2'
-    MOV 4BH, #'1'  ; Mapeamento da tecla '1'
-    
-	LJMP fim
+    MOV 4BH, #'1'
+    RET
 
-; Registro da senha no endereço de memória
 registrarSenha:
-    MOV B, #04h  ; Contador de quantos dígitos recebeu
-    MOV R1, #senha ; Endereço onde vai registrar a senha
-	ACALL receberSenha
-
-	LJMP fim
+    MOV B, #04h      ; Contador de 4 dígitos
+    MOV R1, #senha   ; Ponteiro para o endereço da senha
+    ACALL receberSenha  ; Chama a rotina para registrar a senha
+    RET
 
 registrarInput:
-	MOV B, #04h
-	MOV R1, #input
+    MOV B, #04h      ; Contador de 4 dígitos
+    MOV R1, #input   ; Ponteiro para o endereço da tentativa de entrada
+    ACALL receberSenha  ; Chama a rotina para registrar a entrada do usuário
+    RET
 
 receberSenha:
-    ACALL lerTeclado
-    JNB F0, receberSenha ; Caso não houve leitura de algum dígito
-    CLR F0
-    MOV @R1, A  ; Armazena o valor lido no endereço apontado por R1
-    INC R1      ; Incrementa o endereço para o próximo dígito
-    DJNZ B, receberSenha
+    ; Rotina para capturar 4 dígitos de senha ou entrada
+    MOV B, #04h          ; Reinicia o contador de dígitos
+receber_loop:
+    ACALL lerTeclado     ; Chama a rotina para ler o teclado
+    JNB F0, receber_loop ; Se não houver tecla pressionada, continua
+    CLR F0               ; Limpa a flag de leitura de tecla
+    MOV @R1, A           ; Armazena o valor da tecla no endereço apontado por R1
+    INC R1               ; Avança para o próximo endereço
+    DJNZ B, receber_loop ; Decrementa o contador e repete até 4 dígitos
+    RET
 
-    LJMP fim
-
-; Rotina para piscar os LEDs em caso de senha incorreta
 piscarLeds:
     MOV R2, #5          ; Número de vezes que os LEDs irão piscar
 piscar_loop:
-    SETB P1.0           
+    SETB P1.0           ; Liga o LED
     ACALL delay
-    CLR P1.0           
+    CLR P1.0           ; Desliga o LED
     ACALL delay
-    DJNZ R2, piscar_loop 
-    
-	LJMP fim
+    DJNZ R2, piscar_loop ; Repete o piscar 5 vezes
+    RET
 
-; Sub-rotina de leitura da tecla pressionada
-pegarChave:
-    SETB F0
-    MOV A, R0
-    ACALL delay ; Debounce: adicione um pequeno atraso para evitar leituras múltiplas
-    LJMP fim
+lerTeclado:
+    MOV R0, #00         ; Inicializa R0 com 0 para capturar o valor da tecla
+    MOV P0, #0FFH       ; Configura as portas P0 para alto
+    CLR P0.0            ; Ativa a primeira coluna
+    CALL lerColuna      ; Chama a leitura das colunas
+    JB F0, fim          ; Se uma tecla foi lida, sai da rotina
 
-; Rotina para leitura de colunas do teclado
+    SETB P0.0           ; Desativa a primeira coluna
+    CLR P0.1            ; Ativa a segunda coluna
+    CALL lerColuna
+    JB F0, fim
+
+    SETB P0.1           ; Desativa a segunda coluna
+    CLR P0.2            ; Ativa a terceira coluna
+    CALL lerColuna
+    JB F0, fim
+
+    SETB P0.2           ; Desativa a terceira coluna
+    CLR P0.3            ; Ativa a quarta coluna (se aplicável)
+    CALL lerColuna
+    JB F0, fim
+
+    RET
+
 lerColuna:
     JNB P0.4, pegarChave ; Verifica se a tecla da coluna 1 foi pressionada
     INC R0
@@ -84,58 +97,38 @@ lerColuna:
     INC R0
     JNB P0.6, pegarChave ; Verifica se a tecla da coluna 3 foi pressionada
     INC R0
-    LJMP fim
+    RET
 
-; Rotina para varredura das colunas do teclado
-lerTeclado:
-    MOV R0, #00  ; Inicializa R0 com 0 para capturar o valor da tecla
-
-    MOV P0, #0FFH  ; Configura as portas P0 para alto
-    CLR P0.0       ; Ativa a primeira coluna
-    CALL lerColuna ; Chama a leitura das colunas
-    JB F0, fim     ; Se uma tecla foi lida, sai
-
-    SETB P0.0      ; Desativa a primeira coluna
-    CLR P0.1       ; Ativa a segunda coluna
-    CALL lerColuna
-    JB F0, fim
-
-    SETB P0.1
-    CLR P0.2
-    CALL lerColuna
-    JB F0, fim
-
-    SETB P0.2
-    CLR P0.3
-    CALL lerColuna
-    JB F0, fim
-
-    LJMP fim
+pegarChave:
+    SETB F0              ; Indica que uma tecla foi pressionada
+    MOV A, R0            ; Carrega o valor da tecla
+    RET
 
 verificarInput:
-	MOV R0, #20h
-	MOV R1, #30h
-	MOV R2, #04h
+    ; Comparar a senha com a entrada
+    MOV R0, #senha   ; Ponteiro para a senha armazenada
+    MOV R1, #input   ; Ponteiro para a entrada do usuário
+    MOV R2, #04h     ; Número de dígitos para comparar
 
-percorrerInput:
-	MOV A, @R0
-	MOV B, @R1
-	CJNE A, B, fim ; Verificar se o valor presente nos enderecos sao equivalentes
-	
-	INC R0
-	INC R1
-	
-	DJNZ R2, percorrerInput
-	
-	LJMP fim
-	
-; Rotina de delay para debounce
+senha_igual:
+    MOV A, @R0       ; Carrega um dígito da senha
+    MOV B, @R1       ; Carrega o dígito correspondente da entrada
+    CJNE A, B, erro  ; Se forem diferentes, vai para a rotina de erro
+    INC R0           ; Avança para o próximo dígito da senha
+    INC R1           ; Avança para o próximo dígito da entrada
+    DJNZ R2, senha_igual  ; Continua verificando os próximos dígitos
+    RET              ; Se todas as comparações forem iguais, a senha está correta
+
+erro:
+    ; Se a senha estiver incorreta, aciona o alarme (pisca os LEDs)
+    ACALL piscarLeds
+    RET
+
 delay:
-    MOV R7, #150  ; Valor ajustável para o tempo de debounce
+    MOV R7, #150     ; Tempo de atraso ajustável
     ACALL timer
     RET
 
-; Temporizador de contagem decrescente
 timer:
     DJNZ R7, timer
     RET

@@ -1,23 +1,147 @@
-ORG 0000H
-SJMP MAIN
+    ORG 0200h          ; Armazena a string na memória de programa
+string1:
+    DB "Informe a senha ", 0  ; String com terminador nulo
 
-senha EQU 20h   ; Endereço para armazenar a senha
-input EQU 30h   ; Endereço para armazenar a tentativa de entrada
+    ORG 0000h          ; Início do programa principal
+    LJMP MAIN          ; Pula para a rotina principal
 
+; ----------------------- Definições ------------------------
+senha  EQU 20h         ; Endereço para armazenar a senha
+input  EQU 30h         ; Endereço para armazenar a tentativa de entrada
+RS     EQU P1.3        ; RS conectado ao P1.3
+EN     EQU P1.2        ; Enable conectado ao P1.2
+
+; -------------------- Programa Principal -------------------
 MAIN:
-    MOV P1, #00      ; Inicializa o LED apagado
-    ACALL iniciar    ; Chama a rotina de iniciar (registra a primeira senha)
-    ACALL registrarInput  ; Captura a segunda entrada do usuário para verificação
-    ACALL verificarInput  ; Verifica se a senha está correta
-    SJMP $           ; Loop infinito para parar o programa
+    MOV P1, #00H       ; Inicializa o LED apagado
+    ACALL iniciar      ; Chama a rotina de iniciar (configura a senha)
+    SJMP $             ; Loop infinito para encerrar o programa
 
+; ------------------- Rotina de Inicialização ----------------
 iniciar:
-    ACALL mapearTeclas
-    ACALL registrarSenha  ; Registra a senha inicial
+    ACALL ligarLcd         ; Inicializa o LCD
+    MOV A, #00h            ; Posição inicial do cursor (linha 1, coluna 0)
+    ACALL posicionaCursor  ; Posiciona o cursor
+    ACALL exibirString1    ; Exibe a mensagem "Informe a senha"
+    LJMP fim               ; Encaminha para o fim do programa
+
+; -------------------- Inicialização do LCD ------------------
+ligarLcd:
+    CLR RS                 ; RS = 0, modo comando
+    ; Envia comandos de configuração
+    CLR P1.7               ; 8 bits: D7-D4
+    CLR P1.6
+    SETB P1.5
+    CLR P1.4
+
+    SETB EN                ; Gera pulso no Enable
+    CLR EN
+    CALL delay             ; Delay para estabilizar
+
+    ; Repete pulso para garantir comunicação
+    SETB EN
+    CLR EN
+    SETB P1.7              ; Envia comando extra
+    SETB EN
+    CLR EN
+    CALL delay
+
+    ; Configura LCD em 4 bits
+    CLR P1.7
+    CLR P1.6
+    CLR P1.5
+    CLR P1.4
+    SETB EN
+    CLR EN
+    SETB P1.6
+    SETB P1.5
+    SETB EN
+    CLR EN
+    CALL delay
+
+    ; Finaliza inicialização
+    LJMP fim
+
+; ------------------ Exibição da String ----------------------
+exibirString1:
+    MOV DPTR, #string1   ; Aponta para a string armazenada
+    ACALL exibirString   ; Chama a rotina para exibir a string
+    LJMP fim             ; Encaminha para o fim
+
+exibirString:
+    CLR A                ; Limpa o acumulador A
+loop_mensagem:
+    MOVC A, @A+DPTR      ; Lê o próximo caractere da memória
+    JZ fimMensagem       ; Se 0, fim da string
+    ACALL enviarCaractere ; Envia caractere ao LCD
+    INC DPTR             ; Avança para o próximo caractere
+    SJMP loop_mensagem   ; Continua a exibição
+
+fimMensagem:
     RET
 
+; ------------------ Envio de Caractere ----------------------
+enviarCaractere:
+    SETB RS              ; RS = 1, modo dado
+    MOV P1, A            ; Envia o caractere
+    SETB EN              ; Gera pulso no Enable
+    CLR EN
+    LJMP fim
+
+; ---------------- Posição do Cursor no LCD ------------------
+posicionaCursor:
+    CLR RS               ; Modo comando
+    SETB P1.7            ; Configura bits do cursor
+    MOV C, ACC.6
+    MOV P1.6, C
+    MOV C, ACC.5
+    MOV P1.5, C
+    MOV C, ACC.4
+    MOV P1.4, C
+
+    SETB EN              ; Gera pulso no Enable
+    CLR EN
+    CALL delay
+    CALL delay
+    ACALL fim
+
+; -------------------- Retorno do Cursor ---------------------
+retornaCursor:
+    CLR RS               ; Retorna cursor ao início
+    CLR P1.7
+    CLR P1.6
+    CLR P1.5
+    CLR P1.4
+    SETB EN
+    CLR EN
+    CALL delay
+    ACALL fim
+
+; -------------------- Limpar Display ------------------------
+limparDisplay:
+    CLR RS
+    CLR P1.7
+    CLR P1.6
+    CLR P1.5
+    CLR P1.4
+    SETB EN
+    CLR EN
+    CALL delay
+    ACALL fim
+
+; ------------------ Delay e Timer ---------------------------
+delay:
+    MOV R7, #50
+loop_delay:
+    DJNZ R7, loop_delay
+    RET
+
+timer:
+    DJNZ R7, timer
+    LJMP fim
+
+; ------------------- Mapeamento de Teclas -------------------
 mapearTeclas:
-    ; Mapeia as teclas para o teclado
     MOV 40H, #'#'
     MOV 41H, #'0'
     MOV 42H, #'*'
@@ -30,108 +154,89 @@ mapearTeclas:
     MOV 49H, #'3'
     MOV 4AH, #'2'
     MOV 4BH, #'1'
-    RET
+    LJMP fim
 
+; -------------------- Captura de Senha ----------------------
 registrarSenha:
-    MOV B, #04h      ; Contador de 4 dígitos
-    MOV R1, #senha   ; Ponteiro para o endereço da senha
-    ACALL receberSenha  ; Chama a rotina para registrar a senha
-    RET
-
-registrarInput:
-    MOV B, #04h      ; Contador de 4 dígitos
-    MOV R1, #input   ; Ponteiro para o endereço da tentativa de entrada
-    ACALL receberSenha  ; Chama a rotina para registrar a entrada do usuário
-    RET
+    MOV B, #04h         ; 4 dígitos
+    MOV R1, #senha      ; Ponteiro para a senha
+    ACALL receberSenha  ; Chama rotina para capturar senha
+    LJMP fim
 
 receberSenha:
-    ; Rotina para capturar 4 dígitos de senha ou entrada
-    MOV B, #04h          ; Reinicia o contador de dígitos
+    MOV B, #04h
 receber_loop:
-    ACALL lerTeclado     ; Chama a rotina para ler o teclado
-    JNB F0, receber_loop ; Se não houver tecla pressionada, continua
-    CLR F0               ; Limpa a flag de leitura de tecla
-    MOV @R1, A           ; Armazena o valor da tecla no endereço apontado por R1
-    INC R1               ; Avança para o próximo endereço
-    DJNZ B, receber_loop ; Decrementa o contador e repete até 4 dígitos
-    RET
+    ACALL lerTeclado    ; Lê entrada do teclado
+    JNB F0, receber_loop
+    CLR F0
+    MOV @R1, A
+    INC R1
+    DJNZ B, receber_loop
+    LJMP fim
 
+; ------------------ Piscar LEDs (Alarme) --------------------
 piscarLeds:
-    MOV R2, #5          ; Número de vezes que os LEDs irão piscar
+    MOV R2, #5          ; Pisca 5 vezes
 piscar_loop:
-    SETB P1.0           ; Liga o LED
+    SETB P1.0           ; Liga LED
     ACALL delay
-    CLR P1.0           ; Desliga o LED
+    CLR P1.0            ; Desliga LED
     ACALL delay
-    DJNZ R2, piscar_loop ; Repete o piscar 5 vezes
-    RET
+    DJNZ R2, piscar_loop
+    LJMP fim
 
+; ------------------- Leitura de Teclado ---------------------
 lerTeclado:
-    MOV R0, #00         ; Inicializa R0 com 0 para capturar o valor da tecla
-    MOV P0, #0FFH       ; Configura as portas P0 para alto
-    CLR P0.0            ; Ativa a primeira coluna
-    CALL lerColuna      ; Chama a leitura das colunas
-    JB F0, fim          ; Se uma tecla foi lida, sai da rotina
-
-    SETB P0.0           ; Desativa a primeira coluna
-    CLR P0.1            ; Ativa a segunda coluna
+    MOV R0, #00
+    MOV P0, #0FFH
+    CLR P0.0
     CALL lerColuna
     JB F0, fim
-
-    SETB P0.1           ; Desativa a segunda coluna
-    CLR P0.2            ; Ativa a terceira coluna
+    SETB P0.0
+    CLR P0.1
     CALL lerColuna
     JB F0, fim
-
-    SETB P0.2           ; Desativa a terceira coluna
-    CLR P0.3            ; Ativa a quarta coluna (se aplicável)
+    SETB P0.1
+    CLR P0.2
     CALL lerColuna
     JB F0, fim
-
-    RET
+    SETB P0.2
+    CLR P0.3
+    CALL lerColuna
+    LJMP fim
 
 lerColuna:
-    JNB P0.4, pegarChave ; Verifica se a tecla da coluna 1 foi pressionada
+    JNB P0.4, pegarChave
     INC R0
-    JNB P0.5, pegarChave ; Verifica se a tecla da coluna 2 foi pressionada
+    JNB P0.5, pegarChave
     INC R0
-    JNB P0.6, pegarChave ; Verifica se a tecla da coluna 3 foi pressionada
+    JNB P0.6, pegarChave
     INC R0
-    RET
+    LJMP fim
 
 pegarChave:
-    SETB F0              ; Indica que uma tecla foi pressionada
-    MOV A, R0            ; Carrega o valor da tecla
-    RET
+    SETB F0
+    MOV A, R0
+    LJMP fim
 
+; ------------------ Verificação da Senha --------------------
 verificarInput:
-    ; Comparar a senha com a entrada
-    MOV R0, #senha   ; Ponteiro para a senha armazenada
-    MOV R1, #input   ; Ponteiro para a entrada do usuário
-    MOV R2, #04h     ; Número de dígitos para comparar
-
+    MOV R0, #senha
+    MOV R1, #input
+    MOV R2, #04h
 senha_igual:
-    MOV A, @R0       ; Carrega um dígito da senha
-    MOV B, @R1       ; Carrega o dígito correspondente da entrada
-    CJNE A, B, erro  ; Se forem diferentes, vai para a rotina de erro
-    INC R0           ; Avança para o próximo dígito da senha
-    INC R1           ; Avança para o próximo dígito da entrada
-    DJNZ R2, senha_igual  ; Continua verificando os próximos dígitos
-    RET              ; Se todas as comparações forem iguais, a senha está correta
+    MOV A, @R0
+    MOV B, @R1
+    CJNE A, B, erro
+    INC R0
+    INC R1
+    DJNZ R2, senha_igual
+    LJMP fim
 
 erro:
-    ; Se a senha estiver incorreta, aciona o alarme (pisca os LEDs)
     ACALL piscarLeds
-    RET
+    LJMP fim
 
-delay:
-    MOV R7, #150     ; Tempo de atraso ajustável
-    ACALL timer
-    RET
-
-timer:
-    DJNZ R7, timer
-    RET
-
+; ------------------------ Fim -------------------------------
 fim:
     RET

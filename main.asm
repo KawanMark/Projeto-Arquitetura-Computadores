@@ -1,15 +1,20 @@
     RS      equ     P1.3   
     EN      equ     P1.2    
+	senha EQU 60h   ; Endereço para armazenar a senha
+	input EQU 70h   ; Endereço para armazenar a tentativa de entrada
 
-org 0200h
+org 0400h
 msg1:
-	DB "Informe a senha"
+	DB "Crie uma senha"
+	DB 0
+
+msg2:
+	DB "Informe aa senha"
 	DB 0
 
 org 0000h
 	LJMP START
 
-org 0030h
 START:
 	MOV 40H, #'#' 
 	MOV 41H, #'0'
@@ -26,11 +31,27 @@ START:
 
 MAIN:
 	ACALL lcd_init
+
 	MOV A, #00h
 	CALL posicionaCursor
 	MOV DPTR, #msg1
 	CALL escreveString
+	CALL delay
+	
+	ACALL iniciar
+
+	MOV A, #00h
+	CALL posicionaCursor
+	MOV DPTR, #msg2
+	CALL escreveString
+	CALL registrarInput
+	
+	ACALL verificarInput
 	JMP $
+
+iniciar:
+    ACALL registrarSenha  ; Registra a senha inicial
+    LJMP fim
 ; ------------------- Subrotinas do LCD -------------------;
 lcd_init:
 
@@ -92,10 +113,6 @@ lcd_init:
 	CALL delay
 	RET
 
-
-
-
-
 ;Limpa o display
 clearDisplay:
 	CLR RS	
@@ -117,6 +134,41 @@ clearDisplay:
 
 	CALL delay	
 	RET
+
+
+; ------------------- Subrotinas para receber a senha ------------------;
+
+registrarSenha:
+    MOV B, #04h      ; Contador de 4 dígitos
+    MOV R1, #senha   ; Ponteiro para o endereço da senha
+    ACALL receber_loop  ; Chama a rotina para registrar a senha
+    RET
+
+registrarInput:
+    MOV B, #04h      ; Contador de 4 dígitos
+    MOV R1, #input   ; Ponteiro para o endereço da tentativa de entrada
+    ACALL receber_loop  ; Chama a rotina para registrar a entrada do usuário
+    RET
+
+receber_loop:
+    ACALL lerTeclado     ; Chama a rotina para ler o teclado
+    JNB F0, receber_loop ; Se não houver tecla pressionada, continua
+    CLR F0               ; Limpa a flag de leitura de tecla
+    MOV @R1, A           ; Armazena o valor da tecla no endereço apontado por R1
+    INC R1               ; Avança para o próximo endereço
+    DJNZ B, receber_loop ; Decrementa o contador e repete até 4 dígitos
+    RET
+
+; ------------------- Subrotinas ativar o alarme ------------------;
+piscarLeds:
+    MOV R2, #5          ; Número de vezes que os LEDs irão piscar
+piscar_loop:
+    SETB P1.0           ; Liga o LED
+    ACALL delay
+    CLR P1.0           ; Desliga o LED
+    ACALL delay
+    DJNZ R2, piscar_loop ; Repete o piscar 5 vezes
+    RET
 
 ; ------------------- Subrotinas para envio de msgs para LCD ------------------;
 
@@ -159,6 +211,7 @@ rot:
 	INC R2
 	JNZ rot
 	LJMP fim
+
 ; ------------------- Subrotinas para posicionamentos do cursor ------------------;
 
 posicionaCursor:
@@ -214,7 +267,7 @@ retornaCursor:
 
 ; ------------------- Subrotinas do teclado -------------------;
 
-leituraTeclado:
+lerTeclado:
     MOV R0, #0          ; Limpa R0 - começa pela tecla 0
     MOV P0, #0FFh
 
@@ -257,10 +310,32 @@ gotKey:
     SETB F0             ; Indica tecla encontrada
     RET
 
+; ------------------- Subrotinas para verificar a senha ------------------;
+
+verificarInput:
+    ; Comparar a senha com a entrada
+    MOV R0, #senha   ; Ponteiro para a senha armazenada
+    MOV R1, #input   ; Ponteiro para a entrada do usuário
+    MOV R2, #04h     ; Número de dígitos para comparar
+
+senha_igual:
+    MOV A, @R0       ; Carrega um dígito da senha
+    MOV B, @R1       ; Carrega o dígito correspondente da entrada
+    CJNE A, B, erro  ; Se forem diferentes, vai para a rotina de erro
+    INC R0           ; Avança para o próximo dígito da senha
+    INC R1           ; Avança para o próximo dígito da entrada
+    DJNZ R2, senha_igual  ; Continua verificando os próximos dígitos
+    ACALL fim              ; Se todas as comparações forem iguais, a senha está correta
+
+erro:
+    ; Se a senha estiver incorreta, aciona o alarme (pisca os LEDs)
+    ACALL piscarLeds
+    ACALL fim
+
 delay:
 	MOV R7, #50
 	DJNZ R7, $
-	RET
+	ACALL fim
 
 fim:
 	RET

@@ -15,6 +15,7 @@ msg2:
 org 0000h
 	LJMP START
 
+; Sub-rotina para mapear as teclas do teclado
 START:
 	MOV 40H, #'#' 
 	MOV 41H, #'0'
@@ -32,27 +33,30 @@ START:
 MAIN:
 	ACALL lcd_init
 
-	MOV A, #00h
-	CALL posicionaCursor
+	MOV A, #00h ; Parte responsavel por notificar o usuario
+	CALL posicionaCursor ; e receber a senha
 	MOV DPTR, #msg1
 	CALL escreveString
 	CALL delay
 	
 	ACALL iniciar
 
-	MOV A, #00h
-	CALL posicionaCursor
+	MOV A, #00h ; Notifica o usuario para informar o input
+	CALL posicionaCursor ; e receber o input
 	MOV DPTR, #msg2
 	CALL escreveString
 	CALL registrarInput
 	
-	ACALL verificarInput
+	ACALL verificarInput ; Chama a sub-rotina para verificar 
+	; o input do usuario com o a senha criada
 	SJMP $
 
 iniciar:
     ACALL registrarSenha  ; Registra a senha inicial
     LJMP fim
 ; ------------------- Subrotinas do LCD -------------------;
+
+; Sub-rotina responsavel por iniciar o funcionamento do LCD
 lcd_init:
 
 	CLR RS		
@@ -138,18 +142,21 @@ clearDisplay:
 
 ; ------------------- Subrotinas para receber a senha ------------------;
 
+; Sub-rotina utilizada para o usuario registrar a senha "mestra" da fechadura
 registrarSenha:
     MOV B, #04h      ; Contador de 4 dígitos
     MOV R1, #senha   ; Ponteiro para o endereço da senha
     ACALL receber_loop  ; Chama a rotina para registrar a senha
     RET
 
+; Sub-rotina utilizada para armazenar em um endereco separado o input do usuario
 registrarInput:
     MOV B, #04h      ; Contador de 4 dígitos
     MOV R1, #input   ; Ponteiro para o endereço da tentativa de entrada
     ACALL receber_loop  ; Chama a rotina para registrar a entrada do usuário
     RET
 
+; Sub-rotina auxiliar para receber qualquer input do usuario
 receber_loop:
     ACALL lerTeclado     ; Chama a rotina para ler o teclado
     JNB F0, receber_loop ; Se não houver tecla pressionada, continua
@@ -182,6 +189,8 @@ piscar_loop:
 
 ; ------------------- Subrotinas para envio de msgs para LCD ------------------;
 
+; Sub-rotina utilizada por enviar um unico caractere que sera 
+; projetado no LCD
 enviarCaractere:
 	SETB RS  	
 	MOV C, ACC.7	
@@ -212,18 +221,22 @@ enviarCaractere:
 	CALL delay
 	RET
 
+; Sub-rotinas para realizar a escrita das mensagens para o usuario por meio do LCD
 escreveString:
 	MOV R2, #00h
 rot:
 	MOV A, R2
-	MOVC A, @A+DPTR
+	MOVC A, @A+DPTR ; O acumulador recebe o valor presente no endereco somando com o valor de R2
+	; fazendo a iteracao da string
 	ACALL enviarCaractere
-	INC R2
-	JNZ rot
+	INC R2 ; Aumenta o endereco 
+	JNZ rot 
 	LJMP fim
 
 ; ------------------- Subrotinas para posicionamentos do cursor ------------------;
 
+; Sub-rotina que realiza o posicionamento do cursor onde sera escrito o 
+; caractere no LCD
 posicionaCursor:
 	CLR RS	
 	SETB P1.7
@@ -336,13 +349,16 @@ senha_igual:
     INC R0           ; Avança para o próximo dígito da senha
     INC R1           ; Avança para o próximo dígito da entrada
     DJNZ R2, senha_igual
-	  ACALL piscarP1_1  ; Continua verificando os próximos dígitos
+    ACALL piscarP1_1  ; Continua verificando os próximos dígitos
     LJMP fim              ; Se todas as comparações forem iguais, a senha está correta
+
 
 erro:
     ; Se a senha estiver incorreta, aciona o alarme (pisca os LEDs)
     ACALL piscarLeds
     LJMP fim
+
+; ------------------- Subrotinas auxiliares ------------------;
 
 delay:
 	MOV R7, #50

@@ -33,5 +33,8 @@ Este projeto é ideal para o estudo de **sistemas embarcados** e **programação
 - Serão utilizadas rotinas para leitura do **keypad**, verificação de senha e controle do **LED** de alarme.
 - O projeto também incluirá o uso de um **display** para interagir com o usuário durante a inserção da senha.
 
+## Fluxograma:
+![Fluxograma do Sistema de Alarme](fluxograma.jpeg)
+
 ## Conclusão:
 Este projeto visa explorar a integração entre **hardware** e **software** utilizando Assembly, além de aplicar conceitos de controle de fluxo e verificações condicionais. Ao final, esperamos desenvolver um sistema funcional que possa ser aplicado como um modelo de segurança para veículos.

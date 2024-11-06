@@ -5,13 +5,20 @@
 
 org 0400h
 msg1:
-	DB "Crie uma senha"
+	DB "Crie uma senha-"
 	DB 0
-
 msg2:
-	DB "Informe aa senha"
+	DB "     Informe a senha-"
 	DB 0
-
+msg3:
+	DB "     Senha incorreta!"
+	DB 0
+msg4:
+	DB "     Senha correta!"
+	DB 0
+msg5:
+	DB "Carro ligado!"
+	DB 0
 org 0000h
 	LJMP START
 
@@ -33,27 +40,77 @@ START:
 MAIN:
 	ACALL lcd_init
 
+	ACALL criarSenha
+	
+	ACALL receberInput
+	
+	; o input do usuario com o a senha criada
+	SJMP $
+
+criarSenha:
 	MOV A, #00h ; Parte responsavel por notificar o usuario
 	CALL posicionaCursor ; e receber a senha
 	MOV DPTR, #msg1
 	CALL escreveString
 	CALL delay
-	
-	ACALL iniciar
+
+	MOV A, #40h
+	ACALL posicionaCursor
+    ACALL registrarSenha  ; Registra a senha inicial
+    LJMP fim
+
+receberInput:
+	ACALL clearDisplay
 
 	MOV A, #00h ; Notifica o usuario para informar o input
 	CALL posicionaCursor ; e receber o input
 	MOV DPTR, #msg2
 	CALL escreveString
-	CALL registrarInput
-	
-	ACALL verificarInput ; Chama a sub-rotina para verificar 
-	; o input do usuario com o a senha criada
-	SJMP $
 
-iniciar:
-    ACALL registrarSenha  ; Registra a senha inicial
-    LJMP fim
+	MOV A, #40h
+	ACALL posicionaCursor
+	CALL registrarInput
+
+	ACALL verificarInput ; Chama a sub-rotina para verificar 
+	JB F0, senhaIncorreta
+
+	ACALL senhaCorreta
+	LJMP fim
+
+senhaIncorreta:
+	ACALL clearDisplay
+	
+	CLR F0
+
+	MOV A, #00h
+	ACALL posicionaCursor
+
+	MOV DPTR, #msg3
+	CALL escreveString
+	
+	ACALL receberInput
+	LJMP fim
+
+senhaCorreta:
+	ACALL clearDisplay
+		
+	MOV A, #00h
+	CALL posicionaCursor
+
+	MOV DPTR, #msg4
+	CALL escreveString
+	
+	MOV A, #40h
+	CALL posicionaCursor
+
+	MOV DPTR, #msg5
+	CALL escreveString
+
+ligarMotor:
+	SETB P3.0
+	CLR P3.1
+
+	ACALL ligarMotor
 ; ------------------- Subrotinas do LCD -------------------;
 
 ; Sub-rotina responsavel por iniciar o funcionamento do LCD
@@ -331,12 +388,20 @@ colScan:
 
 gotKey:
     SETB F0 
+	
+	MOV A, #40h
+	ADD A, R0
+	MOV R0, A
+	MOV A, @R0
+	CALL enviarCaractere
+
 	MOV A, R0            ; Indica tecla encontrada
     RET
 
 ; ------------------- Subrotinas para verificar a senha ------------------;
 
 verificarInput:
+	CLR F0
     ; Comparar a senha com a entrada
     MOV R0, #senha   ; Ponteiro para a senha armazenada
     MOV R1, #input   ; Ponteiro para a entrada do usuário
@@ -354,6 +419,7 @@ senha_igual:
 
 
 erro:
+	SETB F0
     ; Se a senha estiver incorreta, aciona o alarme (pisca os LEDs)
     ACALL piscarLeds
     LJMP fim

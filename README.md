@@ -36,8 +36,8 @@ Este projeto consiste no desenvolvimento de um **sensor de alarme de entrada**, 
 
 ## Imagens e vídeos:
 
-![modelo](https://github.com/user-attachments/assets/87479f05-c11f-45b5-a4af-688f44c24fe3)
-![Modelo2](https://github.com/user-attachments/assets/b065f7db-ce81-4648-847a-3b540375429f)
+![modelo](modelo.png)
+![Modelo2](Modelo2.png)
 [![Vídeo demonstrativo do projeto](https://img.youtube.com/vi/fG_6UE7ZajA/0.jpg)](https://youtu.be/fG_6UE7ZajA)
 
 

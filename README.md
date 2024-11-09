@@ -21,17 +21,15 @@ Este projeto consiste no desenvolvimento de um **sensor de alarme de entrada**, 
 - **LEDs**: Indicadores visuais para demonstrar o estado do sistema de alarme (ativado ou desativado).
 - **Keypad**: Utilizado para a entrada de senha. O alarme será disparado ou desativado com base na senha correta.
 
-Este projeto é ideal para o estudo de **sistemas embarcados** e **programação em Assembly**, utilizando operações simples como `MOV`, `JMP` e verificações lógicas para implementar a lógica de segurança.
-
 ## Objetivos:
 - Implementar um sistema de segurança com alarme visual (LEDs).
 - Utilizar o **EDSIN51** para simular o comportamento de um sensor de alarme.
 - Aplicar conceitos de **programação em Assembly** e **interação com hardware**, incluindo a leitura de entradas pelo **keypad** e o controle de saídas com **LEDs** e **display**.
 
 ## Desenvolvimento:
-- O código será desenvolvido em **Assembly** para o processador **8051**, com foco na movimentação de dados e controle lógico.
-- Serão utilizadas rotinas para leitura do **keypad**, verificação de senha e controle do **LED** de alarme.
-- O projeto também incluirá o uso de um **display** para interagir com o usuário durante a inserção da senha.
+- O código é desenvolvido em **Assembly** para o processador **8051**, com foco na movimentação de dados e controle lógico.
+- É utilizadas rotinas para leitura do **keypad**, verificação de senha e controle do **LED** de alarme.
+- O projeto também inclui o uso de um **display** para interagir com o usuário durante a inserção da senha.
 
 ## Fluxograma:
 ![Fluxograma do Sistema de Alarme](fluxograma.jpeg)

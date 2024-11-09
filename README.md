@@ -36,5 +36,12 @@ Este projeto é ideal para o estudo de **sistemas embarcados** e **programação
 ## Fluxograma:
 ![Fluxograma do Sistema de Alarme](fluxograma.jpeg)
 
+## Imagens:
+
+![modelo](https://github.com/user-attachments/assets/87479f05-c11f-45b5-a4af-688f44c24fe3)
+![Modelo2](https://github.com/user-attachments/assets/b065f7db-ce81-4648-847a-3b540375429f)
+
+
+
 ## Conclusão:
 Este projeto visa explorar a integração entre **hardware** e **software** utilizando Assembly, além de aplicar conceitos de controle de fluxo e verificações condicionais. Ao final, esperamos desenvolver um sistema funcional que possa ser aplicado como um modelo de segurança para veículos.

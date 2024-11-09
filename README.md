@@ -40,7 +40,7 @@ Este projeto é ideal para o estudo de **sistemas embarcados** e **programação
 
 ![modelo](https://github.com/user-attachments/assets/87479f05-c11f-45b5-a4af-688f44c24fe3)
 ![Modelo2](https://github.com/user-attachments/assets/b065f7db-ce81-4648-847a-3b540375429f)
-![Vídeo demonstrativo do projeto](https://img.youtube.com/vi/fG_6UE7ZajA/0.jpg)](https://youtu.be/fG_6UE7ZajA)
+[![Vídeo demonstrativo do projeto](https://img.youtube.com/vi/fG_6UE7ZajA/0.jpg)](https://youtu.be/fG_6UE7ZajA)
 
 
 

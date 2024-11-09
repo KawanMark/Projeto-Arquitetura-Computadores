@@ -10,10 +10,10 @@ msg1:
 	DB "Crie uma senha-"
 	DB 0
 msg2:
-	DB "          Informe a senha-"
+	DB "     Informe a senha-"
 	DB 0
 msg3:
-	DB "    Senha incorreta!"
+	DB "     Senha incorreta!"
 	DB 0
 msg4:
 	DB "     Senha correta!"
